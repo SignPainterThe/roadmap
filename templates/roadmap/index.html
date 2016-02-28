@@ -1,0 +1,20 @@
+{% if report_list %}
+	{% for report in report_list %}
+		<p>{{ report.name }}</p>
+		{% if period_list %}
+			<p><ul>
+			{% for period in period_list %}
+				<li>{{ period.name }}<br />
+					{% if organisation_list %}
+					    <ul>
+					    {% for organisation in organisation_list %}
+					        <li><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name_short }}</a></li>
+					    {% endfor %}
+					    </ul>
+					{% endif %}
+				</li>
+			{% endfor %}
+			</ul></p>
+		{% endif %}
+	{% endfor %}
+{% endif %}

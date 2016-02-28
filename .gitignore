@@ -1,0 +1,4 @@
+__pycache__
+__init__.py
+migrations/*
+static/roadmap/js/*

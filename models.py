@@ -1,0 +1,132 @@
+from django.db import models
+from roadmap.formula_eval_function import formula_eval
+import re
+
+MarkPattern = re.compile('\[(.+?)\]')
+
+
+# Организация
+class Organisation(models.Model):
+    number_full = models.IntegerField(null=True, blank=True)
+    name_full = models.CharField(max_length=128)
+    number_medium = models.IntegerField(null=True, blank=True)
+    name_medium = models.CharField(max_length=128, blank=True)
+    name_short = models.CharField(max_length=64)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name_full
+
+
+# Период
+class Period(models.Model):
+    name = models.CharField(max_length=64)
+
+    def __str__(self):
+        return self.name
+
+
+# Отчёт
+class Report(models.Model):
+    name = models.CharField(max_length=64)
+
+    def __str__(self):
+        return self.name
+
+
+# Показатель
+class Mark(models.Model):
+    report = models.ForeignKey(Report)
+    number = models.DecimalField(max_digits=6, decimal_places=3)
+    point = models.CharField(max_length=6, blank=True)
+    name = models.CharField(max_length=256)
+    unit = models.CharField(max_length=64, blank=True)
+    formula = models.CharField(max_length=64, blank=True)
+    affect = models.ManyToManyField('self', symmetrical=False, blank=True)
+    round = models.IntegerField(default=2)
+    count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ("report","number")
+
+    def __str__(self):
+        return str(self.number) + ": " + str(self.name)
+
+
+# Значения
+class Value(models.Model):
+    report = models.ForeignKey(Report)
+    period = models.ForeignKey(Period)
+    organisation = models.ForeignKey(Organisation)
+    mark = models.ForeignKey(Mark)
+    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    plan = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    check = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("report","period","organisation","mark")
+
+    def __str__(self):
+        return str(self.fact) + " (" + str(self.check) + ")" + " / " + str(self.plan)
+
+    def save(self, *args, **kwargs):
+        # применим формулу из Показателей
+        if self.mark.formula:
+            try:
+                mark_replace_list = MarkPattern.findall(self.mark.formula)
+                formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
+
+                for mark_replace in mark_replace_list:
+                    replace_values = Value.objects.values().get(report = self.report, period = self.period, organisation = self.organisation, mark__number = mark_replace)
+
+                    for i in formula:
+                        formula[i] = re.sub(
+                            r'\['+ mark_replace + '\]',
+                            str(replace_values[i]),
+                            formula[i]
+                        )
+
+                (self.fact, self.check, self.plan) = (
+                    formula_eval(formula['fact']),
+                    formula_eval(formula['check']),
+                    formula_eval(formula['plan'])
+                )
+
+            except (ZeroDivisionError):
+                (self.fact, self.check, self.plan) = (float('-999' + str(self.mark.number)) for i in range(3))
+
+        super(Value, self).save(*args, **kwargs)
+
+        # пересчитаем Значения, зависящие от нашего, по Формуле
+        affect_mark_list = Mark.objects.filter (affect = self.mark)
+
+        for affect_mark in affect_mark_list:
+            affect_value = Value.objects.get(report = self.report, period = self.period, organisation = self.organisation, mark = affect_mark)
+            affect_value.save()
+
+        # обновим Итого
+        value_list = Value.objects.filter(report=self.report, period=self.period, mark=self.mark).values()
+        total = { 'fact': 0, 'check': 0, 'plan': 0 }
+
+        for value in value_list:
+            for key, item in total.items():
+                if value[key]:
+                    total[key] += value[key]
+
+        total_save, created = Total.objects.update_or_create(report=self.report, period=self.period, mark=self.mark, defaults=total)
+
+
+# Итого
+class Total(models.Model):
+    report = models.ForeignKey(Report)
+    period = models.ForeignKey(Period)
+    mark = models.ForeignKey(Mark)
+    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    plan = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    check = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("report","period","mark")
+
+    def __str__(self):
+        return str(self.fact) + " (" + str(self.check) + ")" + " / " + str(self.plan)

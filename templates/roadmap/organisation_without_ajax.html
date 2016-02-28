@@ -1,0 +1,12 @@
+<h1>{{ organisation.name_full }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+{% for value in organisation.value_set.all %}
+    <form action="{% url 'roadmap:organisation_edit' organisation.id %}" method="post">
+        {% csrf_token %}
+        <input type="text" name="value" value="{{ value.value }}" />
+        <input type="hidden" name="value_id" value="{{ value.id }}">
+        <input type="submit" value="Submit" />
+    </form>
+{% endfor %}
