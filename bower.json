@@ -1,0 +1,20 @@
+{
+  "name": "roadmap",
+  "homepage": "https://github.com/SignPainterThe/roadmap",
+  "authors": [
+    "Sign Painter"
+  ],
+  "description": "Django-based roadmap-like report webapp.",
+  "main": "",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "bower_components"
+  ],
+  "dependencies": {
+    "jquery": "latest",
+    "handsontable": "latest"
+  }
+}

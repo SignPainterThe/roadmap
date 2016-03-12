@@ -1,5 +1,5 @@
 __pycache__
 __init__.py
 migrations/*
-static/roadmap/js/handsontable/*
-static/roadmap/js/jquery.min.js
+static/roadmap/js/*
+!static/roadmap/js/csrf.js
