@@ -36,7 +36,7 @@
               load = $$('organisation_load'),
               save = $$('organisation_save'),
               hot,
-              csrftoken = getCookie('csrftoken');
+              csrftoken = '{{ csrf_token }}';
 
             hot = new Handsontable(container, {
               columnSorting: true,
