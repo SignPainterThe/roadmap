@@ -16,7 +16,7 @@
                             <tr><th>&nbsp;</th>
                             {% for mark in mark_list %}
                                 <th><a href="{% url 'roadmap:mark' report.id period.id mark.id %}">{{ mark.number }}</a></th>
-                            {% endfor %}    
+                            {% endfor %}
                             </tr>
                         {% for organisation in organisation_list %}
                             <tr>

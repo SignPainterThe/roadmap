@@ -50,16 +50,16 @@ def organisation_save(request, report_id, period_id, organisation_id):
     else:
         for mark in marks['data']:
             try:
-                mark_fact = mark['fact']
-                mark_check = mark['check']
-                mark_plan = mark['plan']
                 selected_value = Value.objects.get(pk=mark['id'])
             except (KeyError, Value.DoesNotExist):
                 return JsonResponse({'result':'false'})
             else:
-                selected_value.fact = mark_fact
-                selected_value.check = mark_check
-                selected_value.plan = mark_plan
+                for i in ['fact','check','plan']:
+                    if (mark[i]==''):
+                        mark[i]=None
+                selected_value.fact = mark['fact']
+                selected_value.check = mark['check']
+                selected_value.plan = mark['plan']
                 selected_value.save()
 
     return JsonResponse({'result':'ok'})
@@ -96,16 +96,16 @@ def mark_save(request, report_id, period_id, mark_id):
     else:
         for organisation in organisations['data']:
             try:
-                organisation_fact = organisation['fact']
-                organisation_check = organisation['check']
-                organisation_plan = organisation['plan']
                 selected_value = Value.objects.get(pk=organisation['id'])
             except (KeyError, Value.DoesNotExist):
                 return JsonResponse({'result':'false'})
             else:
-                selected_value.fact = organisation_fact
-                selected_value.check = organisation_check
-                selected_value.plan = organisation_plan
+                for i in ['fact','check','plan']:
+                    if (organisation[i]==''):
+                        organisation[i]=None
+                selected_value.fact = organisation['fact']
+                selected_value.check = organisation['check']
+                selected_value.plan = organisation['plan']
                 selected_value.save()
 
     return JsonResponse({'result':'ok'})

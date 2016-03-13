@@ -72,28 +72,31 @@ class Value(models.Model):
     def save(self, *args, **kwargs):
         # применим формулу из Показателей
         if self.mark.formula:
+
+            mark_replace_list = MarkPattern.findall(self.mark.formula)
+            formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
+
+            for mark_replace in mark_replace_list:
+                replace_values = Value.objects.values().get(report = self.report, period = self.period, organisation = self.organisation, mark__number = mark_replace)
+
+                for i in formula:
+                    formula[i] = re.sub(
+                        r'\['+ mark_replace + '\]',
+                        str(replace_values[i]),
+                        formula[i]
+                    )
+
             try:
-                mark_replace_list = MarkPattern.findall(self.mark.formula)
-                formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
-
-                for mark_replace in mark_replace_list:
-                    replace_values = Value.objects.values().get(report = self.report, period = self.period, organisation = self.organisation, mark__number = mark_replace)
-
-                    for i in formula:
-                        formula[i] = re.sub(
-                            r'\['+ mark_replace + '\]',
-                            str(replace_values[i]),
-                            formula[i]
-                        )
-
-                (self.fact, self.check, self.plan) = (
+                self.fact, self.check, self.plan = (
                     formula_eval(formula['fact']),
                     formula_eval(formula['check']),
                     formula_eval(formula['plan'])
                 )
 
-            except (ZeroDivisionError):
-                (self.fact, self.check, self.plan) = (float('-999' + str(self.mark.number)) for i in range(3))
+            # если встретили деление на ноль или пустое значение,
+            # запишем условное значение "-99999<номер Показателя>"
+            except (ZeroDivisionError, IndexError):
+                (self.fact, self.check, self.plan) = (float('-99999' + str(self.mark.number)) for i in range(3))
 
         super(Value, self).save(*args, **kwargs)
 
