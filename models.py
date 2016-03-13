@@ -9,7 +9,7 @@ MarkPattern = re.compile('\[(.+?)\]')
 class Organisation(models.Model):
     number_full = models.IntegerField(null=True, blank=True)
     name_full = models.CharField(max_length=128)
-    number_medium = models.IntegerField(null=True, blank=True)
+    number = models.IntegerField(null=True, blank=True)
     name_medium = models.CharField(max_length=128, blank=True)
     name_short = models.CharField(max_length=64)
     active = models.BooleanField(default=True)

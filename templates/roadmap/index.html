@@ -1,20 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roadmap</title>
+</head>
+<body>
 {% if report_list %}
-	{% for report in report_list %}
-		<p>{{ report.name }}</p>
-		{% if period_list %}
-			<p><ul>
-			{% for period in period_list %}
-				<li>{{ period.name }}<br />
-					{% if organisation_list %}
-					    <ul>
-					    {% for organisation in organisation_list %}
-					        <li><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name_short }}</a></li>
-					    {% endfor %}
-					    </ul>
-					{% endif %}
-				</li>
-			{% endfor %}
-			</ul></p>
-		{% endif %}
-	{% endfor %}
+    {% for report in report_list %}
+        <p>{{ report.name }}</p>
+        {% if period_list %}
+            <ul>
+            {% for period in period_list %}
+                <li><p>{{ period.name }}</p>
+                    {% if organisation_list and mark_list %}
+                        <table border=1 cellpadding=5 cellspacing=0>
+                            <tr><th>&nbsp;</th>
+                            {% for mark in mark_list %}
+                                <th><a href="{% url 'roadmap:mark' report.id period.id mark.id %}">{{ mark.number }}</a></th>
+                            {% endfor %}    
+                            </tr>
+                        {% for organisation in organisation_list %}
+                            <tr>
+                                <td><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name_short }}</a></td>
+                                {% for mark in mark_list %}
+                                    <th>&nbsp;</th>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                        </table>
+                    {% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endfor %}
 {% endif %}
+</body>
+</html>
