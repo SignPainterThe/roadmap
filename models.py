@@ -87,16 +87,19 @@ class Value(models.Model):
                     )
 
             try:
-                self.fact, self.check, self.plan = (
-                    formula_eval(formula['fact']),
-                    formula_eval(formula['check']),
-                    formula_eval(formula['plan'])
-                )
-
-            # если встретили деление на ноль или пустое значение,
-            # запишем условное значение "-99999<номер Показателя>"
+                self.fact = formula_eval(formula['fact'])
             except (ZeroDivisionError, IndexError):
-                (self.fact, self.check, self.plan) = (float('-99999' + str(self.mark.number)) for i in range(3))
+                self.fact = None
+
+            try:
+                self.check = formula_eval(formula['check'])
+            except (ZeroDivisionError, IndexError):
+                self.check = None
+
+            try:
+                self.plan = formula_eval(formula['plan'])
+            except (ZeroDivisionError, IndexError):
+                self.plan = None
 
         super(Value, self).save(*args, **kwargs)
 
