@@ -136,3 +136,44 @@ class Total(models.Model):
 
     def __str__(self):
         return str(self.fact) + " (" + str(self.check) + ")" + " / " + str(self.plan)
+
+    def save(self, *args, **kwargs):
+        # применим формулу из Показателей
+        if self.mark.formula:
+
+            mark_replace_list = MarkPattern.findall(self.mark.formula)
+            formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
+
+            for mark_replace in mark_replace_list:
+                replace_values = Total.objects.values().get(report = self.report, period = self.period, mark__number = mark_replace)
+
+                for i in formula:
+                    formula[i] = re.sub(
+                        r'\['+ mark_replace + '\]',
+                        str(replace_values[i]),
+                        formula[i]
+                    )
+
+            try:
+                self.fact = formula_eval(formula['fact'])
+            except (ZeroDivisionError, IndexError):
+                self.fact = None
+
+            try:
+                self.check = formula_eval(formula['check'])
+            except (ZeroDivisionError, IndexError):
+                self.check = None
+
+            try:
+                self.plan = formula_eval(formula['plan'])
+            except (ZeroDivisionError, IndexError):
+                self.plan = None
+
+        super(Total, self).save(*args, **kwargs)
+
+        # пересчитаем Значения, зависящие от нашего, по Формуле
+        affect_mark_list = Mark.objects.filter (affect = self.mark)
+
+        for affect_mark in affect_mark_list:
+            affect_value = Total.objects.get(report = self.report, period = self.period, mark = affect_mark)
+            affect_value.save()
