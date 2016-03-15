@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 import json
-from roadmap.models import Organisation, Mark, Report, Period, Value
+from roadmap.models import Organisation, Mark, Report, Period, Value, Total
 
 
 def index(request):
@@ -44,22 +44,22 @@ def organisation_load(request, report_id, period_id, organisation_id):
 def organisation_save(request, report_id, period_id, organisation_id):
     post_data = request.POST.get('data', False)
     try:
-        marks = json.loads(post_data)
+        values = json.loads(post_data)
     except TypeError:
         return JsonResponse({'result':'false'})
     else:
-        for mark in marks['data']:
+        for value in values['data']:
             try:
-                selected_value = Value.objects.get(pk=mark['id'])
+                selected_value = Value.objects.get(pk=value['id'])
             except (KeyError, Value.DoesNotExist):
                 return JsonResponse({'result':'false'})
             else:
                 for i in ['fact','check','plan']:
-                    if (mark[i]==''):
-                        mark[i]=None
-                selected_value.fact = mark['fact']
-                selected_value.check = mark['check']
-                selected_value.plan = mark['plan']
+                    if (value[i]==''):
+                        value[i]=None
+                selected_value.fact = value['fact']
+                selected_value.check = value['check']
+                selected_value.plan = value['plan']
                 selected_value.save()
 
     return JsonResponse({'result':'ok'})
@@ -83,6 +83,14 @@ def mark_load(request, report_id, period_id, mark_id):
             'check':            value.check,
             'plan':             value.plan
         })
+    total = Total.objects.get(report=report_id, period=period_id, mark=mark_id)
+    output.append({
+        'id':               '',
+        'organisation':     'Итого',
+        'fact':             total.fact,
+        'check':            total.check,
+        'plan':             total.plan
+    })
     data = {'data': output}
     return JsonResponse(data)
 
@@ -90,22 +98,23 @@ def mark_load(request, report_id, period_id, mark_id):
 def mark_save(request, report_id, period_id, mark_id):
     post_data = request.POST.get('data', False)
     try:
-        organisations = json.loads(post_data)
+        values = json.loads(post_data)
     except TypeError:
         return JsonResponse({'result':'false'})
     else:
-        for organisation in organisations['data']:
-            try:
-                selected_value = Value.objects.get(pk=organisation['id'])
-            except (KeyError, Value.DoesNotExist):
-                return JsonResponse({'result':'false'})
-            else:
-                for i in ['fact','check','plan']:
-                    if (organisation[i]==''):
-                        organisation[i]=None
-                selected_value.fact = organisation['fact']
-                selected_value.check = organisation['check']
-                selected_value.plan = organisation['plan']
-                selected_value.save()
+        for value in values['data']:
+            if (value['id']):
+                try:
+                    selected_value = Value.objects.get(pk=value['id'])
+                except (KeyError, Value.DoesNotExist):
+                    return JsonResponse({'result':'false'})
+                else:
+                    for i in ['fact','check','plan']:
+                        if (value[i]==''):
+                            value[i]=None
+                    selected_value.fact = value['fact']
+                    selected_value.check = value['check']
+                    selected_value.plan = value['plan']
+                    selected_value.save()
 
     return JsonResponse({'result':'ok'})
