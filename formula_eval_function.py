@@ -9,16 +9,21 @@ def formula_eval(formula):
     '''
 
     def parse(formula_string):
+        formula_string = formula_string.replace(' ', '')
         number = ''
-        if formula_string[0] in OPERATORS:
-            yield float('0')
-        for s in formula_string:
+        for i, s in enumerate(formula_string):
             if s in '1234567890.':
                 number += s
             elif number:
                 yield float(number)
                 number = ''
-            if s in OPERATORS or s in "()":
+            if i == 0 and s == '-':
+                number += '-'
+            if s == '-' and formula_string[i-1] in OPERATORS:
+                number += '-'
+            elif s == '-' and formula_string[i+1] == '-':
+                yield s
+            elif s in '+*/()':
                 yield s
         if number:
             yield float(number)
