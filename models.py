@@ -2,8 +2,6 @@ from django.db import models
 from roadmap.formula_eval_function import formula_eval
 import re
 
-MarkPattern = re.compile('\[(.+?)\]')
-
 
 # Организация
 class Organisation(models.Model):
@@ -46,6 +44,8 @@ class Mark(models.Model):
     round = models.IntegerField(default=2)
     count = models.IntegerField(default=0)
 
+    pattern = re.compile('\[(.+?)\]')
+
     class Meta:
         unique_together = ("report","number")
 
@@ -73,7 +73,7 @@ class Value(models.Model):
         # применим формулу из Показателей
         if self.mark.formula:
 
-            mark_replace_list = MarkPattern.findall(self.mark.formula)
+            mark_replace_list = self.mark.pattern.findall(self.mark.formula)
             formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
 
             for mark_replace in mark_replace_list:
@@ -141,7 +141,7 @@ class Total(models.Model):
         # применим формулу из Показателей
         if self.mark.formula:
 
-            mark_replace_list = MarkPattern.findall(self.mark.formula)
+            mark_replace_list = self.mark.pattern.findall(self.mark.formula)
             formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
 
             for mark_replace in mark_replace_list:

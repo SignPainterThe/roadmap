@@ -1,5 +1,5 @@
 from django.contrib import admin
-from roadmap.models import Organisation, Report, Period, Mark, Value, Total, MarkPattern
+from roadmap.models import Organisation, Report, Period, Mark, Value, Total
 
 
 class MarkAdmin(admin.ModelAdmin):
@@ -8,7 +8,7 @@ class MarkAdmin(admin.ModelAdmin):
         form.instance.affect.clear()
 
         if (change and form.instance.formula):
-            mark_variable_list = MarkPattern.findall(form.instance.formula)
+            mark_variable_list = form.instance.pattern.findall(form.instance.formula)
             for mark_variable in mark_variable_list:
                 mark_affect = Mark.objects.get( number=mark_variable )
                 form.instance.affect.add( mark_affect )
