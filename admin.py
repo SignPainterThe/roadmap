@@ -1,5 +1,5 @@
 from django.contrib import admin
-from roadmap.models import Organisation, Report, Period, Mark, Value, Total
+from roadmap.models import Organisation, Report, Period, Mark, Value, Constant, CVal
 
 
 class MarkAdmin(admin.ModelAdmin):
@@ -19,4 +19,5 @@ admin.site.register(Report)
 admin.site.register(Period)
 admin.site.register(Mark, MarkAdmin)
 admin.site.register(Value)
-admin.site.register(Total)
+admin.site.register(Constant)
+admin.site.register(CVal)

@@ -27,6 +27,7 @@ class Period(models.Model):
 # Отчёт
 class Report(models.Model):
     name = models.CharField(max_length=64)
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
@@ -39,10 +40,10 @@ class Mark(models.Model):
     point = models.CharField(max_length=6, blank=True)
     name = models.CharField(max_length=256)
     unit = models.CharField(max_length=64, blank=True)
+    round = models.IntegerField(default=2)
     formula = models.CharField(max_length=64, blank=True)
     affect = models.ManyToManyField('self', symmetrical=False, blank=True)
-    round = models.IntegerField(default=2)
-    count = models.IntegerField(default=0)
+    description = models.TextField(blank=True)
 
     pattern = re.compile('\[(.+?)\]')
 
@@ -53,7 +54,7 @@ class Mark(models.Model):
         return str(self.number) + ": " + str(self.name)
 
 
-# Значения
+# Значение
 class Value(models.Model):
     report = models.ForeignKey(Report)
     period = models.ForeignKey(Period)
@@ -120,6 +121,29 @@ class Value(models.Model):
                     total[key] += value[key]
 
         total_save, created = Total.objects.update_or_create(report=self.report, period=self.period, mark=self.mark, defaults=total)
+
+
+# Константа
+class Constant(models.Model):
+    name = models.CharField(max_length=64)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return "{" + str(self.name) + "}: " + str(self.description)
+
+
+# Значение константы
+class CVal(models.Model):
+    report = models.ForeignKey(Report)
+    period = models.ForeignKey(Period)
+    constant = models.ForeignKey(Constant)
+    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+
+    class Meta:
+        unique_together = ("report","period","constant")
+
+    def __str__(self):
+        return str(self.fact)
 
 
 # Итого
