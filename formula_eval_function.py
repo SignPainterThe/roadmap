@@ -14,16 +14,14 @@ def formula_eval(formula):
         for i, s in enumerate(formula_string):
             if s in '1234567890.':
                 number += s
+            elif s == '-' and (i == 0 or formula_string[i-1] in '+-*/()'):
+                number += s
             elif number:
                 yield float(number)
                 number = ''
-            if i == 0 and s == '-':
-                number += '-'
-            if s == '-' and formula_string[i-1] in OPERATORS:
-                number += '-'
-            elif s == '-' and formula_string[i+1] == '-':
+            if s in '+*/()':
                 yield s
-            elif s in '+*/()':
+            elif s == '-' and i != 0 and (formula_string[i+1] == '-' or formula_string[i-1] not in '+-*/()'):
                 yield s
         if number:
             yield float(number)
