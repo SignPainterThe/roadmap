@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 import json
-from roadmap.models import Organisation, Mark, Report, Period, Value, Total
+from roadmap.models import Organisation, Mark, Report, Period, Checkin, Value, Total
 
 
 def index(request):
@@ -25,8 +25,9 @@ def organisation(request, report_id, period_id, organisation_id):
     return render(request, 'roadmap/organisation.html', {'report': report, 'period': period, 'organisation': organisation})
 
 
+# все показатели данной организации за период
 def organisation_load(request, report_id, period_id, organisation_id):
-    value_list = Value.objects.filter(report=report_id, period=period_id, organisation=organisation_id).order_by('mark__number')
+    value_list = Value.objects.filter(checkin__report=report_id, checkin__period=period_id, checkin__organisation=organisation_id).order_by('mark__number')
     output = list()
     for value in value_list:
         output.append({
@@ -72,13 +73,14 @@ def mark(request, report_id, period_id, mark_id):
     return render(request, 'roadmap/mark.html', {'report': report, 'period': period, 'mark': mark})
 
 
+# все организации с данным показателем за период
 def mark_load(request, report_id, period_id, mark_id):
-    value_list = Value.objects.filter(report=report_id, period=period_id, mark=mark_id).order_by('organisation__number')
+    value_list = Value.objects.filter(checkin__report=report_id, checkin__period=period_id, mark=mark_id).order_by('checkin__organisation__number')
     output = list()
     for value in value_list:
         output.append({
             'id':               value.id,
-            'organisation':     value.organisation.name_short,
+            'organisation':     value.checkin.organisation.name_short,
             'fact':             value.fact,
             'check':            value.check,
             'plan':             value.plan
