@@ -42,30 +42,6 @@ def organisation_load(request, report_id, period_id, organisation_id):
     return JsonResponse(data)
 
 
-def organisation_save(request, report_id, period_id, organisation_id):
-    post_data = request.POST.get('data', False)
-    try:
-        values = json.loads(post_data)
-    except TypeError:
-        return JsonResponse({'result':'false'})
-    else:
-        for value in values['data']:
-            try:
-                selected_value = Value.objects.get(pk=value['id'])
-            except (KeyError, Value.DoesNotExist):
-                return JsonResponse({'result':'false'})
-            else:
-                for i in ['fact','check','plan']:
-                    if (value[i]==''):
-                        value[i]=None
-                selected_value.fact = value['fact']
-                selected_value.check = value['check']
-                selected_value.plan = value['plan']
-                selected_value.save()
-
-    return JsonResponse({'result':'ok'})
-
-
 def mark(request, report_id, period_id, mark_id):
     report = get_object_or_404(Report, pk=report_id)
     period = get_object_or_404(Period, pk=period_id)
@@ -97,7 +73,7 @@ def mark_load(request, report_id, period_id, mark_id):
     return JsonResponse(data)
 
 
-def mark_save(request, report_id, period_id, mark_id):
+def value_save(request):
     post_data = request.POST.get('data', False)
     try:
         values = json.loads(post_data)

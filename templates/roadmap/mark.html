@@ -70,7 +70,7 @@
 
             Handsontable.Dom.addEvent(save, 'click', function() {
               $.ajax({
-                url: '{% url 'roadmap:mark_save' report.id period.id mark.id %}',
+                url: '{% url 'roadmap:value_save' %}',
                 data: {
                   data: JSON.stringify({data: hot.getSourceData()})
                 }, // returns all cells' data
