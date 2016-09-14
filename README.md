@@ -2,7 +2,7 @@
 
 Roadmap is a Django-based application for creating and editing reports, based on following structure:
 
-|						|	Mark 1	|	Mark 1	|
+|						|	Mark 1	|	Mark 2	|
 |			---			|	---		|	---		|
 |	**Organisation 1**	|	1100	|	1200	|
 |	**Organisation 2**	|	2100	|	2200	|

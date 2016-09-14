@@ -4,7 +4,7 @@
   "authors": [
     "Sign Painter"
   ],
-  "description": "Django-based roadmap-like report webapp.",
+  "description": "Django-based roadmap-like report",
   "main": "",
   "moduleType": [],
   "license": "MIT",

@@ -8,8 +8,8 @@
 
   <script src="{% static 'roadmap/js/jquery/dist/jquery.min.js' %}"></script>
   <script src="{% static 'roadmap/js/csrf.js' %}"></script>
-  <script src="{% static 'roadmap/js/handsontable/dist/handsontable.full.js' %}"></script>
-  <link rel="stylesheet" media="screen" href="{% static 'roadmap/js/handsontable/dist/handsontable.full.css' %}">
+  <script src="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.js' %}"></script>
+  <link rel="stylesheet" media="screen" href="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.css' %}">
 
 </head>
 
@@ -36,6 +36,7 @@
               load = $$('organisation_load'),
               save = $$('organisation_save'),
               hot,
+              cold,
               csrftoken = '{{ csrf_token }}';
 
             hot = new Handsontable(container, {
@@ -64,16 +65,42 @@
                 type: 'POST',
                 success: function (res) {
                   hot.loadData(res.data);
+                  cold = [];
+                  res.data.forEach(function(row, i, arr) {
+                    cold.push({
+                      "id":    row['id'],
+                      "fact":  row['fact'],
+                      "check": row['check'],
+                      "plan":  row['plan']
+                    });
+                  });
                   organisationConsole.innerText = 'Data loaded';
                 }
               });
             });
 
             Handsontable.Dom.addEvent(save, 'click', function() {
+              var
+                data = [],
+                data_new = hot.getSourceData();
+
+              cold.forEach(function(row, i, arr) {
+                if ((row['id'] == data_new[i]['id']) && (
+                  row['fact']  != data_new[i]['fact'] ||
+                  row['check'] != data_new[i]['check'] ||
+                  row['plan']  != data_new[i]['plan'])) {
+                    data.push({
+                      "id":    data_new[i]['id'],
+                      "fact":  data_new[i]['fact'],
+                      "check": data_new[i]['check'],
+                      "plan":  data_new[i]['plan']
+                    });
+                }
+              });
               $.ajax({
                 url: '{% url 'roadmap:value_save' %}',
                 data: {
-                  data: JSON.stringify({data: hot.getSourceData()})
+                  data: JSON.stringify({data})
                 }, // returns all cells' data
                 dataType: 'json',
                 type: 'POST',
