@@ -1,5 +1,6 @@
 from django.db import models
 from roadmap.formula_eval_function import formula_eval
+from django.core.exceptions import ObjectDoesNotExist
 import re
 
 
@@ -65,6 +66,24 @@ class Checkin(models.Model):
     def __str__(self):
         return self.report.name + " / " + self.period.name + " / " + self.organisation.name_short
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            super(Checkin, self).save(*args, **kwargs)
+        if not self.pk:
+            super(Checkin, self).save(*args, **kwargs)
+            report = self.report
+            ch = Checkin.objects.get(pk=self.pk)
+            list_of_marks = Mark.objects.filter(report=report)
+
+            for mark in list_of_marks:
+                value = Value.create(ch, mark)
+
+
+# class ValueManager(models.Manager):
+#     def create_value(self, checkin, mark):
+#         value = self.create(checkin = checkin, mark = mark)
+#         return value
+
 
 # Значение
 class Value(models.Model):
@@ -74,6 +93,8 @@ class Value(models.Model):
     plan = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
     check = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
 
+    # objects = ValueManager()
+
     class Meta:
         unique_together = ("checkin","mark")
 
@@ -81,56 +102,68 @@ class Value(models.Model):
         return str(self.fact) + " (" + str(self.check) + ")" + " / " + str(self.plan)
 
     def save(self, *args, **kwargs):
-        # применим формулу из Показателей
-        if self.mark.formula:
+        # Если существует
+        if self.pk:
+            # применим формулу из Показателей
+            if self.mark.formula:
 
-            mark_replace_list = self.mark.pattern.findall(self.mark.formula)
-            formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
+                mark_replace_list = self.mark.pattern.findall(self.mark.formula)
+                formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
 
-            for mark_replace in mark_replace_list:
-                replace_values = Value.objects.values().get(checkin = self.checkin, mark__number = mark_replace)
+                for mark_replace in mark_replace_list:
+                    replace_values = Value.objects.values().get(checkin = self.checkin, mark__number = mark_replace)
 
-                for i in formula:
-                    formula[i] = re.sub(
-                        r'\['+ mark_replace + '\]',
-                        str(replace_values[i]),
-                        formula[i]
-                    )
+                    for i in formula:
+                        formula[i] = re.sub(
+                            r'\['+ mark_replace + '\]',
+                            str(replace_values[i]),
+                            formula[i]
+                        )
 
-            try:
-                self.fact = formula_eval(formula['fact'])
-            except (ZeroDivisionError, IndexError):
-                self.fact = None
+                try:
+                    self.fact = formula_eval(formula['fact'])
+                except (ZeroDivisionError, IndexError):
+                    self.fact = None
 
-            try:
-                self.check = formula_eval(formula['check'])
-            except (ZeroDivisionError, IndexError):
-                self.check = None
+                try:
+                    self.check = formula_eval(formula['check'])
+                except (ZeroDivisionError, IndexError):
+                    self.check = None
 
-            try:
-                self.plan = formula_eval(formula['plan'])
-            except (ZeroDivisionError, IndexError):
-                self.plan = None
+                try:
+                    self.plan = formula_eval(formula['plan'])
+                except (ZeroDivisionError, IndexError):
+                    self.plan = None
 
         super(Value, self).save(*args, **kwargs)
 
-        # пересчитаем Значения, зависящие от нашего, по Формуле
-        affect_mark_list = Mark.objects.filter (affect = self.mark)
+        if self.pk:
+            # пересчитаем Значения, зависящие от нашего, по Формуле
+            affect_mark_list = Mark.objects.filter (affect = self.mark)
 
-        for affect_mark in affect_mark_list:
-            affect_value = Value.objects.get(checkin = self.checkin, mark = affect_mark)
-            affect_value.save()
+            for affect_mark in affect_mark_list:
+                try:
+                    affect_value = Value.objects.get(checkin = self.checkin, mark = affect_mark)
+                    affect_value.save()
+                except ObjectDoesNotExist:
+                    affect_value = None
 
-        # обновим Итого
-        value_list = Value.objects.filter(checkin__report=self.checkin.report, checkin__period=self.checkin.period, mark=self.mark).values()
-        total = { 'fact': 0, 'check': 0, 'plan': 0 }
+            # обновим Итого
+            value_list = Value.objects.filter(checkin__report=self.checkin.report, checkin__period=self.checkin.period, mark=self.mark).values()
+            total = { 'fact': 0, 'check': 0, 'plan': 0 }
 
-        for value in value_list:
-            for key, item in total.items():
-                if value[key]:
-                    total[key] += value[key]
+            for value in value_list:
+                for key, item in total.items():
+                    if value[key]:
+                        total[key] += value[key]
 
-        total_save, created = Total.objects.update_or_create(report=self.checkin.report, period=self.checkin.period, mark=self.mark, defaults=total)
+            total_save, created = Total.objects.update_or_create(report=self.checkin.report, period=self.checkin.period, mark=self.mark, defaults=total)
+
+    @classmethod
+    def create(cls, checkin, mark):
+        value = cls(checkin=checkin, mark=mark)
+        value.save()
+        return value
 
 
 # Константа
@@ -209,5 +242,8 @@ class Total(models.Model):
         affect_mark_list = Mark.objects.filter (affect = self.mark)
 
         for affect_mark in affect_mark_list:
-            affect_value = Total.objects.get(report = self.report, period = self.period, mark = affect_mark)
-            affect_value.save()
+            try:
+                affect_value = Total.objects.get(report = self.report, period = self.period, mark = affect_mark)
+                affect_value.save()
+            except ObjectDoesNotExist:
+                affect_value = None
