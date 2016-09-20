@@ -84,16 +84,25 @@
                 data_new = hot.getSourceData();
 
               cold.forEach(function(row, i, arr) {
-                if ((row['id'] == data_new[i]['id']) && (
-                  row['fact']  != data_new[i]['fact'] ||
-                  row['check'] != data_new[i]['check'] ||
-                  row['plan']  != data_new[i]['plan'])) {
+                if (row['id'] == data_new[i]['id']) {
+                  if (row['fact'] != data_new[i]['fact']) {
                     data.push({
                       "id":    data_new[i]['id'],
-                      "fact":  data_new[i]['fact'],
-                      "check": data_new[i]['check'],
+                      "fact":  data_new[i]['fact']
+                    });
+                  }
+                  if (row['check'] != data_new[i]['check']) {
+                    data.push({
+                      "id":    data_new[i]['id'],
+                      "check": data_new[i]['check']
+                    });
+                  }
+                  if (row['plan'] != data_new[i]['plan']) {
+                    data.push({
+                      "id":    data_new[i]['id'],
                       "plan":  data_new[i]['plan']
                     });
+                  }
                 }
               });
               $.ajax({

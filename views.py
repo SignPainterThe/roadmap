@@ -87,12 +87,28 @@ def value_save(request):
                 except (KeyError, Value.DoesNotExist):
                     return JsonResponse({'result':'false'})
                 else:
-                    for i in ['fact','check','plan']:
-                        if (value[i]==''):
-                            value[i]=None
-                    selected_value.fact = value['fact']
-                    selected_value.check = value['check']
-                    selected_value.plan = value['plan']
-                    selected_value.save()
+                    try:
+                        value['fact']
+                    except KeyError:
+                        pass
+                    else:
+                        selected_value.fact = value['fact']
+                        selected_value.save()
+
+                    try:
+                        value['check']
+                    except KeyError:
+                        pass
+                    else:
+                        selected_value.check = value['check']
+                        selected_value.save()
+
+                    try:
+                        value['plan']
+                    except KeyError:
+                        pass
+                    else:
+                        selected_value.plan = value['plan']
+                        selected_value.save()
 
     return JsonResponse({'result':'ok'})
