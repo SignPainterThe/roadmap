@@ -53,6 +53,17 @@ class Mark(models.Model):
     def __str__(self):
         return str(self.number) + ": " + str(self.name)
 
+    def save(self, *args, **kwargs):
+        if self.pk:
+            super(Mark, self).save(*args, **kwargs)
+        if not self.pk:
+            super(Mark, self).save(*args, **kwargs)
+            list_of_checkins = Checkin.objects.filter(report=self.report)
+            mark = Mark.objects.get(pk=self.pk)
+
+            for checkin in list_of_checkins:
+                value = Value.create(checkin, mark)
+
 
 # Запись в Отчёте
 class Checkin(models.Model):
@@ -71,12 +82,11 @@ class Checkin(models.Model):
             super(Checkin, self).save(*args, **kwargs)
         if not self.pk:
             super(Checkin, self).save(*args, **kwargs)
-            report = self.report
-            ch = Checkin.objects.get(pk=self.pk)
-            list_of_marks = Mark.objects.filter(report=report)
+            checkin = Checkin.objects.get(pk=self.pk)
+            list_of_marks = Mark.objects.filter(report=self.report)
 
             for mark in list_of_marks:
-                value = Value.create(ch, mark)
+                value = Value.create(checkin, mark)
 
 
 # class ValueManager(models.Manager):

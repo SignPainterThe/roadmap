@@ -92,7 +92,7 @@ def value_save(request):
                     except KeyError:
                         pass
                     else:
-                        selected_value.fact = value['fact']
+                        selected_value.fact = value['fact'] if value['fact'] != '' else None
                         selected_value.save()
 
                     try:
@@ -100,7 +100,7 @@ def value_save(request):
                     except KeyError:
                         pass
                     else:
-                        selected_value.check = value['check']
+                        selected_value.check = value['check'] if value['check'] != '' else None
                         selected_value.save()
 
                     try:
@@ -108,7 +108,7 @@ def value_save(request):
                     except KeyError:
                         pass
                     else:
-                        selected_value.plan = value['plan']
+                        selected_value.plan = value['plan'] if value['plan'] != '' else None
                         selected_value.save()
 
     return JsonResponse({'result':'ok'})
