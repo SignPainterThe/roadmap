@@ -46,7 +46,10 @@
               rowHeaders: true,
               colHeaders: ['Organisation', 'Fact', 'Check', 'Plan'],
               columns: [
-                {data: 'organisation'},
+                {
+                  data: 'organisation',
+                  editor: false
+                },
                 {data: 'fact'},
                 {data: 'check'},
                 {data: 'plan'}

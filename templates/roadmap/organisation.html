@@ -46,8 +46,14 @@
               rowHeaders: true,
               colHeaders: ['Point', 'Mark', 'Fact', 'Check', 'Plan'],
               columns: [
-                {data: 'point'},
-                {data: 'mark'},
+                {
+                  data: 'point',
+                  editor: false
+                },
+                {
+                  data: 'mark',
+                  editor: false
+                },
                 {data: 'fact'},
                 {data: 'check'},
                 {data: 'plan'}
