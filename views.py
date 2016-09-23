@@ -56,7 +56,7 @@ def mark_load(request, report_id, period_id, mark_id):
     for value in value_list:
         output.append({
             'id':               value.id,
-            'organisation':     value.checkin.organisation.name_short,
+            'organisation':     value.checkin.organisation.name,
             'fact':             value.fact,
             'check':            value.check,
             'plan':             value.plan

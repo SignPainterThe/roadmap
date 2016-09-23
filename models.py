@@ -6,14 +6,14 @@ import re
 
 # Организация
 class Organisation(models.Model):
-    number_full = models.IntegerField(null=True, blank=True)
-    name_full = models.CharField(max_length=128)
+    name = models.CharField(max_length=64)
     number = models.IntegerField(null=True, blank=True)
+    name_full = models.CharField(max_length=128, blank=True)
+    number_full = models.IntegerField(null=True, blank=True)
     name_medium = models.CharField(max_length=128, blank=True)
-    name_short = models.CharField(max_length=64)
 
     def __str__(self):
-        return self.name_full
+        return self.name
 
 
 # Период
@@ -75,7 +75,7 @@ class Checkin(models.Model):
         unique_together = ("report","period","organisation")
 
     def __str__(self):
-        return self.report.name + " / " + self.period.name + " / " + self.organisation.name_short
+        return self.report.name + " / " + self.period.name + " / " + self.organisation.name
 
     def save(self, *args, **kwargs):
         if self.pk:
