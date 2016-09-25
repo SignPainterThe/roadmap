@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms.models import model_to_dict
 from roadmap.formula_eval_function import formula_eval
 from django.core.exceptions import ObjectDoesNotExist
 import re
@@ -42,6 +43,7 @@ class Mark(models.Model):
     unit = models.CharField(max_length=64, blank=True)
     round = models.IntegerField(default=2)
     formula = models.CharField(max_length=64, blank=True)
+    total_formula = models.CharField(max_length=64, blank=True)
     affect = models.ManyToManyField('self', symmetrical=False, blank=True)
     description = models.TextField(blank=True)
 
@@ -99,9 +101,9 @@ class Checkin(models.Model):
 class Value(models.Model):
     checkin = models.ForeignKey(Checkin)
     mark = models.ForeignKey(Mark)
-    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    plan = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    check = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    fact = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
+    plan = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
+    check = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
 
     # objects = ValueManager()
 
@@ -121,12 +123,12 @@ class Value(models.Model):
                 formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
 
                 for mark_replace in mark_replace_list:
-                    replace_values = Value.objects.values().get(checkin = self.checkin, mark__number = mark_replace)
+                    replace_value = Value.objects.values().get(checkin = self.checkin, mark__number = mark_replace)
 
                     for i in formula:
                         formula[i] = re.sub(
                             r'\['+ mark_replace + '\]',
-                            str(replace_values[i]),
+                            str(replace_value[i]),
                             formula[i]
                         )
 
@@ -182,7 +184,7 @@ class Constant(models.Model):
     description = models.TextField(blank=True)
 
     def __str__(self):
-        return "{" + str(self.name) + "}: " + str(self.description)
+        return "[" + str(self.name) + "]: " + str(self.description)
 
 
 # Значение константы
@@ -190,13 +192,13 @@ class ConstVal(models.Model):
     report = models.ForeignKey(Report)
     period = models.ForeignKey(Period)
     constant = models.ForeignKey(Constant)
-    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    value = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
 
     class Meta:
         unique_together = ("report","period","constant")
 
     def __str__(self):
-        return str(self.fact)
+        return str(self.value)
 
 
 # Итого
@@ -204,9 +206,9 @@ class Total(models.Model):
     report = models.ForeignKey(Report)
     period = models.ForeignKey(Period)
     mark = models.ForeignKey(Mark)
-    fact = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    plan = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
-    check = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    fact = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
+    plan = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
+    check = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
 
     class Meta:
         unique_together = ("report","period","mark")
@@ -216,18 +218,54 @@ class Total(models.Model):
 
     def save(self, *args, **kwargs):
         # применим формулу из Показателей
-        if self.mark.formula:
+        if self.mark.total_formula:
+            const_replace_list = self.mark.pattern.findall(self.mark.total_formula)
+            formula = { 'fact':self.mark.total_formula, 'check': self.mark.total_formula, 'plan': self.mark.total_formula }
+
+            for const_replace in const_replace_list:
+                replace_value = {}
+
+                if const_replace == 'self':
+                    replace_value = model_to_dict(self, fields=['fact', 'check', 'plan'])
+                else:
+                    constval_object = ConstVal.objects.values().get(report = self.report, period = self.period, constant__name = const_replace)
+                    for i in formula:
+                        replace_value[i] = constval_object['value']
+
+                for i in formula:
+                    formula[i] = re.sub(
+                        r'\['+ const_replace + '\]',
+                        str(replace_value[i]),
+                        formula[i]
+                    )
+
+            try:
+                self.fact = formula_eval(formula['fact'])
+            except (ZeroDivisionError, IndexError):
+                self.fact = None
+
+            try:
+                self.check = formula_eval(formula['check'])
+            except (ZeroDivisionError, IndexError):
+                self.check = None
+
+            try:
+                self.plan = formula_eval(formula['plan'])
+            except (ZeroDivisionError, IndexError):
+                self.plan = None
+
+        elif self.mark.formula:
 
             mark_replace_list = self.mark.pattern.findall(self.mark.formula)
             formula = { 'fact':self.mark.formula, 'check': self.mark.formula, 'plan': self.mark.formula }
 
             for mark_replace in mark_replace_list:
-                replace_values = Total.objects.values().get(report = self.report, period = self.period, mark__number = mark_replace)
+                replace_value = Total.objects.values().get(report = self.report, period = self.period, mark__number = mark_replace)
 
                 for i in formula:
                     formula[i] = re.sub(
                         r'\['+ mark_replace + '\]',
-                        str(replace_values[i]),
+                        str(replace_value[i]),
                         formula[i]
                     )
 

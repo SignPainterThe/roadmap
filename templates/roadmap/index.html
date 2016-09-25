@@ -20,7 +20,7 @@
                             </tr>
                         {% for organisation in organisation_list %}
                             <tr>
-                                <td><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name_short }}</a></td>
+                                <td><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name }}</a></td>
                                 {% for mark in mark_list %}
                                     <th>&nbsp;</th>
                                 {% endfor %}
