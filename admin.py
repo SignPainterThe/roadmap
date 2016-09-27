@@ -14,11 +14,15 @@ class MarkAdmin(admin.ModelAdmin):
                 form.instance.affect.add( mark_affect )
 
 
+class ValueAdmin(admin.ModelAdmin):
+    list_display = ('checkin', 'mark')
+
+
 admin.site.register(Organisation)
 admin.site.register(Report)
 admin.site.register(Period)
 admin.site.register(Checkin)
 admin.site.register(Mark, MarkAdmin)
-admin.site.register(Value)
+admin.site.register(Value, ValueAdmin)
 admin.site.register(Constant)
 admin.site.register(ConstVal)

@@ -20,6 +20,7 @@
           <p>
             <button name="load" id="organisation_load">Load</button>
             <button name="save" id="organisation_save">Save</button>
+            <button name="report" id="get_report">Report</button>
           </p>
 
           <div id="organisation_console" class="console">Click "Load" to load data from server</div>
@@ -115,7 +116,7 @@
               $.ajax({
                 url: '{% url 'roadmap:value_save' %}',
                 data: {
-                  data: JSON.stringify({data})
+                  data: JSON.stringify(data)
                 }, // returns all cells' data
                 dataType: 'json',
                 type: 'POST',
@@ -135,6 +136,27 @@
             });
 
             load.click();
+
+            $('#get_report').click(function() {
+              var data = {'report': {{ report.id }}, 'period': {{ period.id }}, 'organisation': {{ organisation.id }} }
+              $.ajax({
+                url: '{% url 'roadmap:report_create' %}',
+                data: { data: JSON.stringify(data) },
+                dataType: 'json',
+                type: 'POST',
+                success: function (res) {
+                  if (res.result === 'ok') {
+                    organisationConsole.innerText = 'Report created';
+                  }
+                  else {
+                    organisationConsole.innerText = 'Creation error';
+                  }
+                },
+                error: function () {
+                  organisationConsole.innerText = 'Creation error';
+                }
+              });
+            });
           </script>
 
 </body>

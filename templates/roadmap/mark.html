@@ -111,7 +111,7 @@
               $.ajax({
                 url: '{% url 'roadmap:value_save' %}',
                 data: {
-                  data: JSON.stringify({data})
+                  data: JSON.stringify(data)
                 }, // returns all cells' data
                 dataType: 'json',
                 type: 'POST',

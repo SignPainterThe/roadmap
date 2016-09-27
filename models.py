@@ -91,12 +91,6 @@ class Checkin(models.Model):
                 value = Value.create(checkin, mark)
 
 
-# class ValueManager(models.Manager):
-#     def create_value(self, checkin, mark):
-#         value = self.create(checkin = checkin, mark = mark)
-#         return value
-
-
 # Значение
 class Value(models.Model):
     checkin = models.ForeignKey(Checkin)
@@ -105,13 +99,12 @@ class Value(models.Model):
     plan = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
     check = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
 
-    # objects = ValueManager()
 
     class Meta:
         unique_together = ("checkin","mark")
 
     def __str__(self):
-        return str(self.fact) + " (" + str(self.check) + ")" + " / " + str(self.plan)
+        return str(self.checkin) + ": " + str(self.mark)
 
     def save(self, *args, **kwargs):
         # Если существует
@@ -171,6 +164,7 @@ class Value(models.Model):
 
             total_save, created = Total.objects.update_or_create(report=self.checkin.report, period=self.checkin.period, mark=self.mark, defaults=total)
 
+# переделать на class ValueManager(models.Manager)
     @classmethod
     def create(cls, checkin, mark):
         value = cls(checkin=checkin, mark=mark)

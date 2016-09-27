@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
-import json
 from roadmap.models import Organisation, Mark, Report, Period, Checkin, Value, Total
+import json
+from roadmap import create_reports
 
 
 def index(request):
@@ -40,6 +41,19 @@ def organisation_load(request, report_id, period_id, organisation_id):
         })
     data = {'data': output}
     return JsonResponse(data)
+
+# создание xlsx файла
+def report_create(request):
+    post_data = request.POST.get('data', False)
+    try:
+        values = json.loads(post_data)
+    except TypeError:
+        return JsonResponse({'result':'false'})
+    else:
+        if create_reports.create_example(values['report'], values['period'], values['organisation']):
+            return JsonResponse({'result':'ok'})
+        else:
+            return JsonResponse({'result':'false'})
 
 
 def mark(request, report_id, period_id, mark_id):
@@ -80,7 +94,7 @@ def value_save(request):
     except TypeError:
         return JsonResponse({'result':'false'})
     else:
-        for value in values['data']:
+        for value in values:
             if (value['id']):
                 try:
                     selected_value = Value.objects.get(pk=value['id'])
