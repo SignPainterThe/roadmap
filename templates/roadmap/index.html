@@ -1,37 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Roadmap</title>
 </head>
 <body>
-{% if report_list %}
-    {% for report in report_list %}
+{% if dict_to_pass %}
+    {% for report, period_list in dict_to_pass.items %}
         <p>{{ report.name }}</p>
-        {% if period_list %}
             <ul>
             {% for period in period_list %}
-                <li><p>{{ period.name }}</p>
-                    {% if organisation_list and mark_list %}
-                        <table border=1 cellpadding=5 cellspacing=0>
-                            <tr><th>&nbsp;</th>
-                            {% for mark in mark_list %}
-                                <th><a href="{% url 'roadmap:mark' report.id period.id mark.id %}">{{ mark.number }}</a></th>
-                            {% endfor %}
-                            </tr>
-                        {% for organisation in organisation_list %}
-                            <tr>
-                                <td><a href="{% url 'roadmap:organisation' report.id period.id organisation.id %}">{{ organisation.name }}</a></td>
-                                {% for mark in mark_list %}
-                                    <th>&nbsp;</th>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                        </table>
-                    {% endif %}
-                </li>
+                <li><a href="{% url 'roadmap:checkin' report.id period.id %}">{{ period.name }}</a></li>
             {% endfor %}
             </ul>
-        {% endif %}
     {% endfor %}
 {% endif %}
 </body>

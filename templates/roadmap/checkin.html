@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <title>{{ report.name }}</title>
+
+{% load staticfiles %}
+
+  <script src="{% static 'roadmap/js/jquery/dist/jquery.min.js' %}"></script>
+  <script src="{% static 'roadmap/js/csrf.js' %}"></script>
+  <script src="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.js' %}"></script>
+  <link rel="stylesheet" media="screen" href="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.css' %}">
+
+</head>
+
+<body>
+
+          <h2>{{ report.name }} {{ period.name }}</h2>
+
+          <p>
+            <button name="load" id="checkin_load">Load</button>
+          </p>
+
+          <div id="checkin_console" class="console">Click "Load" to load data from server</div>
+
+          <div id="checkin_table"></div>
+
+          <script>
+            var
+              $$ = function(id) {
+                return document.getElementById(id);
+              },
+              container = $$('checkin_table'),
+              checkinConsole = $$('checkin_console'),
+              load = $$('checkin_load'),
+              save = $$('checkin_save'),
+              hot,
+              cold,
+              csrftoken = '{{ csrf_token }}'
+              data1 = [["","1","2"],["11","22","33"]];
+
+            hot = new Handsontable(container, {
+              columnSorting: true,
+              rowHeaders: true,
+              colHeaders: false,
+              contextMenu: true,
+            });
+
+            Handsontable.Dom.addEvent(load, 'click', function() {
+              $.ajax({
+                url: '{% url 'roadmap:checkin_load' report.id period.id %}',
+                data: {},
+                dataType: 'json',
+                type: 'POST',
+                success: function (res) {
+                  hot.loadData(res.data);
+                  cold = [];
+                  checkinConsole.innerText = 'Data loaded';
+                }
+              });
+            });
+
+            load.click();
+          </script>
+
+</body>
+</html>

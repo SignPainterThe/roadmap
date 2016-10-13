@@ -6,16 +6,33 @@ import json
 from roadmap import create_reports
 
 
+# def index(request):
+#     period_list = Period.objects.all()
+#     report_list = Report.objects.all()
+#     organisation_list = Organisation.objects.order_by('number')
+#     mark_list = Mark.objects.order_by('number')
+#     context = {
+#         'period_list': period_list,
+#         'report_list': report_list,
+#         'organisation_list': organisation_list,
+#         'mark_list': mark_list }
+#     return render(request, 'roadmap/index.html', context)
+
+
 def index(request):
-    period_list = Period.objects.all()
-    report_list = Report.objects.all()
-    organisation_list = Organisation.objects.order_by('number')
-    mark_list = Mark.objects.order_by('number')
+    report_list = set()
+    dict_to_pass = {}
+    for ch in Checkin.objects.all():
+        report_list.add(ch.report)
+    for report in report_list:
+        period_list = set()
+        for ch in Checkin.objects.filter(report=report):
+            period_list.add(ch.period)
+        dict_to_pass[report] = period_list
+    print(dict_to_pass)
     context = {
-        'period_list': period_list,
-        'report_list': report_list,
-        'organisation_list': organisation_list,
-        'mark_list': mark_list }
+        'dict_to_pass': dict_to_pass
+        }
     return render(request, 'roadmap/index.html', context)
 
 
@@ -41,6 +58,7 @@ def organisation_load(request, report_id, period_id, organisation_id):
         })
     data = {'data': output}
     return JsonResponse(data)
+
 
 # создание xlsx файла
 def report_create(request):
@@ -126,3 +144,34 @@ def value_save(request):
                         selected_value.save()
 
     return JsonResponse({'result':'ok'})
+
+
+def checkin(request, report_id, period_id):
+    report = get_object_or_404(Report, pk=report_id)
+    period = get_object_or_404(Period, pk=period_id)
+    return render(request, 'roadmap/checkin.html', {'report': report, 'period': period})
+
+
+def checkin_load(request, report_id, period_id):
+    checkin_list = Checkin.objects.filter(report=report_id, period=period_id)
+    mark_list = Mark.objects.filter(report=report_id).order_by('number')
+    output = list()
+    outputline = list()
+    # формирование шапки таблицы
+    outputline.append('')
+    for mark in mark_list:
+        outputline.append(str(mark.number))
+    output.append(outputline)
+    # странная сторчка, чтобы не затиралось в outputline
+    outputline = [1, 2]
+
+    for checkin in checkin_list:
+        outputline.clear()
+        outputline.append(checkin.organisation.name)
+        for mark in mark_list:
+            value = Value.objects.get(checkin=checkin,mark=mark)
+            outputline.append(str(value.fact))
+        output.append(outputline)
+        outputline = [1, 2]
+    data = {'data': output}
+    return JsonResponse(data)

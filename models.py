@@ -192,7 +192,7 @@ class ConstVal(models.Model):
         unique_together = ("report","period","constant")
 
     def __str__(self):
-        return str(self.value)
+        return str(self.constant.name) + ', ' + str(self.period.name) + ': ' + str(self.value)
 
 
 # Итого
