@@ -36,14 +36,15 @@
               save = $$('checkin_save'),
               hot,
               cold,
-              csrftoken = '{{ csrf_token }}'
-              data1 = [["","1","2"],["11","22","33"]];
+              csrftoken = '{{ csrf_token }}';
 
             hot = new Handsontable(container, {
               columnSorting: true,
               rowHeaders: true,
               colHeaders: false,
               contextMenu: true,
+              renderer: "html",
+              editor: false,
             });
 
             Handsontable.Dom.addEvent(load, 'click', function() {

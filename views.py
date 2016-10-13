@@ -1,22 +1,9 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, JsonResponse
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, get_script_prefix
 from roadmap.models import Organisation, Mark, Report, Period, Checkin, Value, Total
 import json
 from roadmap import create_reports
-
-
-# def index(request):
-#     period_list = Period.objects.all()
-#     report_list = Report.objects.all()
-#     organisation_list = Organisation.objects.order_by('number')
-#     mark_list = Mark.objects.order_by('number')
-#     context = {
-#         'period_list': period_list,
-#         'report_list': report_list,
-#         'organisation_list': organisation_list,
-#         'mark_list': mark_list }
-#     return render(request, 'roadmap/index.html', context)
 
 
 def index(request):
@@ -160,14 +147,14 @@ def checkin_load(request, report_id, period_id):
     # формирование шапки таблицы
     outputline.append('')
     for mark in mark_list:
-        outputline.append(str(mark.number))
+        outputline.append('<a href = "' + reverse('roadmap:mark', kwargs={'report_id':report_id, 'period_id':period_id, 'mark_id':mark.id}) + '">' + str(mark.number) + '</a>')
     output.append(outputline)
     # странная сторчка, чтобы не затиралось в outputline
     outputline = [1, 2]
-
     for checkin in checkin_list:
         outputline.clear()
-        outputline.append(checkin.organisation.name)
+        outputline.append('<a href = "' + reverse(
+            'roadmap:organisation', kwargs={'report_id':report_id, 'period_id':period_id, 'organisation_id':checkin.organisation.id}) + '">' + checkin.organisation.name + '</a>')
         for mark in mark_list:
             value = Value.objects.get(checkin=checkin,mark=mark)
             outputline.append(str(value.fact))
