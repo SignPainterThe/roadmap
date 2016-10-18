@@ -15,6 +15,7 @@
   ],
   "dependencies": {
     "jquery": "latest",
-    "handsontable": "latest"
+    "handsontable": "latest",
+    "bootstrap": "latest"
   }
 }

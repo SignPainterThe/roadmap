@@ -1,68 +1,55 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset='utf-8'>
-  <title>{{ report.name }}</title>
+{% extends 'roadmap/base.html' %}
 
-{% load staticfiles %}
+{% block title %}{{ report.name }} {{ period.name }}{% endblock %}
 
-  <script src="{% static 'roadmap/js/jquery/dist/jquery.min.js' %}"></script>
-  <script src="{% static 'roadmap/js/csrf.js' %}"></script>
-  <script src="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.js' %}"></script>
-  <link rel="stylesheet" media="screen" href="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.css' %}">
+{% block content %}
 
-</head>
+  <h2>{{ report.name }} {{ period.name }}</h2>
 
-<body>
+  <p>
+    <button name="load" id="checkin_load">Load</button>
+  </p>
 
-          <h2>{{ report.name }} {{ period.name }}</h2>
+  <div id="checkin_console" class="console">Click "Load" to load data from server</div>
+  <div id="checkin_table"></div>
 
-          <p>
-            <button name="load" id="checkin_load">Load</button>
-          </p>
+  <script>
+    var
+      $$ = function(id) {
+        return document.getElementById(id);
+      },
+      container = $$('checkin_table'),
+      checkinConsole = $$('checkin_console'),
+      load = $$('checkin_load'),
+      save = $$('checkin_save'),
+      hot,
+      cold,
+      csrftoken = '{{ csrf_token }}';
 
-          <div id="checkin_console" class="console">Click "Load" to load data from server</div>
+    hot = new Handsontable(container, {
+      columnSorting: true,
+      rowHeaders: true,
+      colHeaders: false,
+      contextMenu: true,
+      renderer: "html",
+      readOnly: true
+    });
 
-          <div id="checkin_table"></div>
+    Handsontable.Dom.addEvent(load, 'click', function() {
+      $.ajax({
+        url: '{% url 'roadmap:checkin_load' report.id period.id %}',
+        data: {},
+        dataType: 'json',
+        type: 'POST',
+        success: function (res) {
+          hot.loadData(res.data);
+          cold = [];
+          checkinConsole.innerText = 'Data loaded';
+        }
+      });
+    });
 
-          <script>
-            var
-              $$ = function(id) {
-                return document.getElementById(id);
-              },
-              container = $$('checkin_table'),
-              checkinConsole = $$('checkin_console'),
-              load = $$('checkin_load'),
-              save = $$('checkin_save'),
-              hot,
-              cold,
-              csrftoken = '{{ csrf_token }}';
+    load.click();
+  </script>
 
-            hot = new Handsontable(container, {
-              columnSorting: true,
-              rowHeaders: true,
-              colHeaders: false,
-              contextMenu: true,
-              renderer: "html",
-              editor: false,
-            });
-
-            Handsontable.Dom.addEvent(load, 'click', function() {
-              $.ajax({
-                url: '{% url 'roadmap:checkin_load' report.id period.id %}',
-                data: {},
-                dataType: 'json',
-                type: 'POST',
-                success: function (res) {
-                  hot.loadData(res.data);
-                  cold = [];
-                  checkinConsole.innerText = 'Data loaded';
-                }
-              });
-            });
-
-            load.click();
-          </script>
-
-</body>
-</html>
+{% endblock %}

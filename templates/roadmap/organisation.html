@@ -1,163 +1,150 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset='utf-8'>
-  <title>{{ organisation.name_full }}</title>
+{% extends 'roadmap/base.html' %}
 
-{% load staticfiles %}
+{% block title %}{{ organisation.name_full }}{% endblock %}
 
-  <script src="{% static 'roadmap/js/jquery/dist/jquery.min.js' %}"></script>
-  <script src="{% static 'roadmap/js/csrf.js' %}"></script>
-  <script src="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.js' %}"></script>
-  <link rel="stylesheet" media="screen" href="{% static 'roadmap/js/handsontable/dist/handsontable.full.min.css' %}">
+{% block content %}
 
-</head>
+  <h2>{{ organisation.name_full }}</h2>
 
-<body>
+  <p>
+    <button name="load" id="organisation_load">Load</button>
+    <button name="save" id="organisation_save">Save</button>
+    <button name="report" id="get_report">Report</button>
+  </p>
 
-          <h2>{{ organisation.name_full }}</h2>
+  <div id="organisation_console" class="console">Click "Load" to load data from server</div>
+  <div id="organisation_table"></div>
 
-          <p>
-            <button name="load" id="organisation_load">Load</button>
-            <button name="save" id="organisation_save">Save</button>
-            <button name="report" id="get_report">Report</button>
-          </p>
+  <script>
+    var
+      $$ = function(id) {
+        return document.getElementById(id);
+      },
+      container = $$('organisation_table'),
+      organisationConsole = $$('organisation_console'),
+      load = $$('organisation_load'),
+      save = $$('organisation_save'),
+      hot,
+      cold,
+      csrftoken = '{{ csrf_token }}';
 
-          <div id="organisation_console" class="console">Click "Load" to load data from server</div>
+    hot = new Handsontable(container, {
+      columnSorting: true,
+      startRows: 1,
+      startCols: 6,
+      rowHeaders: true,
+      colHeaders: ['Point', 'Mark', 'Fact', 'Check', 'Plan'],
+      columns: [
+        {
+          data: 'point',
+          readOnly: true
+        },
+        {
+          data: 'mark',
+          readOnly: true
+        },
+        {data: 'fact'},
+        {data: 'check'},
+        {data: 'plan'}
+      ],
+      minSpareCols: 0,
+      minSpareRows: 0,
+      contextMenu: true,
+    });
 
-          <div id="organisation_table"></div>
-
-          <script>
-            var
-              $$ = function(id) {
-                return document.getElementById(id);
-              },
-              container = $$('organisation_table'),
-              organisationConsole = $$('organisation_console'),
-              load = $$('organisation_load'),
-              save = $$('organisation_save'),
-              hot,
-              cold,
-              csrftoken = '{{ csrf_token }}';
-
-            hot = new Handsontable(container, {
-              columnSorting: true,
-              startRows: 1,
-              startCols: 6,
-              rowHeaders: true,
-              colHeaders: ['Point', 'Mark', 'Fact', 'Check', 'Plan'],
-              columns: [
-                {
-                  data: 'point',
-                  editor: false
-                },
-                {
-                  data: 'mark',
-                  editor: false
-                },
-                {data: 'fact'},
-                {data: 'check'},
-                {data: 'plan'}
-              ],
-              minSpareCols: 0,
-              minSpareRows: 0,
-              contextMenu: true,
+    Handsontable.Dom.addEvent(load, 'click', function() {
+      $.ajax({
+        url: '{% url 'roadmap:organisation_load' report.id period.id organisation.id %}',
+        data: {},
+        dataType: 'json',
+        type: 'POST',
+        success: function (res) {
+          hot.loadData(res.data);
+          cold = [];
+          res.data.forEach(function(row, i, arr) {
+            cold.push({
+              "id":    row['id'],
+              "fact":  row['fact'],
+              "check": row['check'],
+              "plan":  row['plan']
             });
+          });
+          organisationConsole.innerText = 'Data loaded';
+        }
+      });
+    });
 
-            Handsontable.Dom.addEvent(load, 'click', function() {
-              $.ajax({
-                url: '{% url 'roadmap:organisation_load' report.id period.id organisation.id %}',
-                data: {},
-                dataType: 'json',
-                type: 'POST',
-                success: function (res) {
-                  hot.loadData(res.data);
-                  cold = [];
-                  res.data.forEach(function(row, i, arr) {
-                    cold.push({
-                      "id":    row['id'],
-                      "fact":  row['fact'],
-                      "check": row['check'],
-                      "plan":  row['plan']
-                    });
-                  });
-                  organisationConsole.innerText = 'Data loaded';
-                }
-              });
+    Handsontable.Dom.addEvent(save, 'click', function() {
+      var
+        data = [],
+        data_new = hot.getSourceData();
+
+      cold.forEach(function(row, i, arr) {
+        if (row['id'] == data_new[i]['id']) {
+          if (row['fact'] != data_new[i]['fact']) {
+            data.push({
+              "id":    data_new[i]['id'],
+              "fact":  data_new[i]['fact']
             });
-
-            Handsontable.Dom.addEvent(save, 'click', function() {
-              var
-                data = [],
-                data_new = hot.getSourceData();
-
-              cold.forEach(function(row, i, arr) {
-                if (row['id'] == data_new[i]['id']) {
-                  if (row['fact'] != data_new[i]['fact']) {
-                    data.push({
-                      "id":    data_new[i]['id'],
-                      "fact":  data_new[i]['fact']
-                    });
-                  }
-                  if (row['check'] != data_new[i]['check']) {
-                    data.push({
-                      "id":    data_new[i]['id'],
-                      "check": data_new[i]['check']
-                    });
-                  }
-                  if (row['plan'] != data_new[i]['plan']) {
-                    data.push({
-                      "id":    data_new[i]['id'],
-                      "plan":  data_new[i]['plan']
-                    });
-                  }
-                }
-              });
-              $.ajax({
-                url: '{% url 'roadmap:value_save' %}',
-                data: {
-                  data: JSON.stringify(data)
-                }, // returns all cells' data
-                dataType: 'json',
-                type: 'POST',
-                success: function (res) {
-                  if (res.result === 'ok') {
-                    organisationConsole.innerText = 'Data saved';
-                    load.click();
-                  }
-                  else {
-                    organisationConsole.innerText = 'Save error';
-                  }
-                },
-                error: function () {
-                  organisationConsole.innerText = 'Save error';
-                }
-              });
+          }
+          if (row['check'] != data_new[i]['check']) {
+            data.push({
+              "id":    data_new[i]['id'],
+              "check": data_new[i]['check']
             });
-
+          }
+          if (row['plan'] != data_new[i]['plan']) {
+            data.push({
+              "id":    data_new[i]['id'],
+              "plan":  data_new[i]['plan']
+            });
+          }
+        }
+      });
+      $.ajax({
+        url: '{% url 'roadmap:value_save' %}',
+        data: {
+          data: JSON.stringify(data)
+        },
+        dataType: 'json',
+        type: 'POST',
+        success: function (res) {
+          if (res.result === 'ok') {
+            organisationConsole.innerText = 'Data saved';
             load.click();
+          }
+          else {
+            organisationConsole.innerText = 'Save error';
+          }
+        },
+        error: function () {
+          organisationConsole.innerText = 'Save error';
+        }
+      });
+    });
 
-            $('#get_report').click(function() {
-              var data = {'report': {{ report.id }}, 'period': {{ period.id }}, 'organisation': {{ organisation.id }} }
-              $.ajax({
-                url: '{% url 'roadmap:report_create' %}',
-                data: { data: JSON.stringify(data) },
-                dataType: 'json',
-                type: 'POST',
-                success: function (res) {
-                  if (res.result === 'ok') {
-                    organisationConsole.innerText = 'Report created';
-                  }
-                  else {
-                    organisationConsole.innerText = 'Creation error';
-                  }
-                },
-                error: function () {
-                  organisationConsole.innerText = 'Creation error';
-                }
-              });
-            });
-          </script>
+    load.click();
 
-</body>
-</html>
+    $('#get_report').click(function() {
+      var data = {'report': {{ report.id }}, 'period': {{ period.id }}, 'organisation': {{ organisation.id }} }
+      $.ajax({
+        url: '{% url 'roadmap:report_create' %}',
+        data: { data: JSON.stringify(data) },
+        dataType: 'json',
+        type: 'POST',
+        success: function (res) {
+          if (res.result === 'ok') {
+            organisationConsole.innerText = 'Report created';
+          }
+          else {
+            organisationConsole.innerText = 'Creation error';
+          }
+        },
+        error: function () {
+          organisationConsole.innerText = 'Creation error';
+        }
+      });
+    });
+  </script>
+
+{% endblock %}

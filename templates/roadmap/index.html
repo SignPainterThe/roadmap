@@ -1,19 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Roadmap</title>
-</head>
-<body>
-{% if dict_to_pass %}
-    {% for report, period_list in dict_to_pass.items %}
-        <p>{{ report.name }}</p>
-            <ul>
-            {% for period in period_list %}
-                <li><a href="{% url 'roadmap:checkin' report.id period.id %}">{{ period.name }}</a></li>
-            {% endfor %}
-            </ul>
-    {% endfor %}
-{% endif %}
-</body>
-</html>
+{% extends 'roadmap/base.html' %}
+
+{% block title %}Roadmap{% endblock %}
+
+{% block content %}
+    {% if dict_to_pass %}
+        {% for report, period_list in dict_to_pass.items %}
+            <p>{{ report.name }}</p>
+                <ul>
+                {% for period in period_list %}
+                    <li><a href="{% url 'roadmap:checkin' report.id period.id %}">{{ period.name }}</a></li>
+                {% endfor %}
+                </ul>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
